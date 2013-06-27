@@ -11,21 +11,27 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq(
     organization        := "com.github.aloiscochard.shona",
     version             := "0.1-SNAPSHOT",
-    scalaVersion        := "2.11.0-SNAPSHOT",
-    scalaOrganization   := "org.scala-lang.macro-paradise",
+    scalaVersion        := "2.10.2",
     resolvers           ++= Seq(
       Resolver.sonatypeRepo("releases"),
       Resolver.sonatypeRepo("snapshots")
+    ),
+    scalacOptions := Seq(
+      "-feature",
+      "-language:existentials",
+      "-language:implicitConversions",
+      "-language:reflectiveCalls",
+      "-deprecation",
+      "-unchecked"
     )
   )
 }
 
 object Dependencies {
   val testDependencies = Seq(
-    libraryDependencies += "org.specs2" %% "specs2" % "1.13.1-SNAPSHOT" % "test" cross CrossVersion.full
+    libraryDependencies += "org.specs2" %% "specs2" % "1.13.1-SNAPSHOT" % "test"
   )
 }
-
 
 object ShonaBuild extends Build {
   import Resolvers._
@@ -42,9 +48,9 @@ object ShonaBuild extends Build {
     "shona-core",
     file("shona-core"),
     settings = buildSettings ++ testDependencies ++ Seq(
-      libraryDependencies <+= (scalaVersion)("org.scala-lang.macro-paradise" % "scala-reflect" % _),
+      libraryDependencies <++= (scalaVersion)(v => Seq("org.scala-lang" % "scala-reflect" % v, "org.scala-lang" % "scala-compiler" % v)),
       libraryDependencies ++= Seq(
-        "com.chuusai" % "shapeless" % "1.2.5-SNAPSHOT" cross CrossVersion.full
+        "com.chuusai" %% "shapeless" % "1.2.4"
       )
     )
   )

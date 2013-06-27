@@ -7,7 +7,7 @@
 package shona
 
 import language.experimental.macros
-import scala.reflect.macros.{Context, Macro}
+import scala.reflect.macros.Context
 
 import shapeless.{BasisConstraint, HList, HListerAux, HNil, LUBConstraint}
 import shapeless.LUBConstraint._
@@ -31,24 +31,68 @@ package graph {
       new Graph(vl, el)
 
     // TODO Investigate implicits based implementation (vs macro)
-    def get[G <: AnyGraph](graph: G)(path: _) = macro GraphMacro.get[G]
+    def get[G <: AnyGraph](graph: G)(path: String) = macro GraphMacro.get[G]
   }
 
-  trait GraphMacro extends Macro with MacroHelper {
-    def get[G <: AnyGraph : c.WeakTypeTag](graph: c.Expr[G])(path: c.Tree): c.Tree = {
-      import c._
+  object GraphMacro extends ReflectionUtils {
+    def get[G <: AnyGraph : c.WeakTypeTag](c: Context)(graph: c.Expr[G])(path: c.Expr[String]) = {
       import c.universe._
+
+      def withLabel(tpe: Type) = {
+        val TypeRef(_, _, Label(label) :: _) = tpe
+        label -> tpe
+      }
+
+      object Label {
+        def unapply(tpe: Type) = {
+          val ConstantType(Constant(id: String)) = tpe.normalize
+          Some(id)
+        }
+      }
+
+      object HList {
+        def decons(tpe: Type): List[Type] = tpe match {
+          case TypeRef(x, _, a :: b :: _) => a :: decons(b)
+          case x => Nil
+        }
+
+        def select(i: Int): Tree => Tree = tree => i match {
+          case 0 => Select(tree, "head")
+          case i => select(i - 1)(Select(tree, "tail"))
+        }
+      }
+
+      object Graph {
+        def unapply(tpe: Type) = {
+          val TypeRef(_, _, xs) = tpe
+          val List(verticesHList, edgesHList) = xs
+          val vertices = HList.decons(verticesHList).map(t => withLabel(t))
+          val edges = HList.decons(edgesHList).map(t => withLabel(t))
+          Some(vertices -> edges)
+        }
+      }
+
+      object Entity {
+        def unapply(tpe: Type) = {
+          val TypeRef(_, _, List(fieldsHList)) = tpe
+          val fields = HList.decons(fieldsHList).map { x =>
+            val TypeRef(_, _, List(Label(label), tpe)) = x
+            label -> tpe
+          }
+          Some(fields)
+        }
+      }
 
       // TODO Edges support
       val Graph(vertices, _) = c.typeCheck(graph.tree).tpe
 
-      path match {
-        case Ident(TermName(vertexLabel)) =>
+      path.tree match {
+        case Literal(Constant(vertexLabel: String)) =>
           vertices.map({ case (label, _) => label }).zipWithIndex.find({ case (label, _ ) => label == vertexLabel }) match {
-            case Some((_, index)) => HList.select(index)(q"${graph.tree}.vertices")
-            case None => c.abort(path.pos, s"Vertex '$vertexLabel' not found")
+            case Some((_, index)) => c.Expr[Vertex[_, _]](HList.select(index)(Select(c.resetAllAttrs(graph.tree), newTermName("vertices"))))
+            case None => c.abort(path.tree.pos, s"Vertex '$vertexLabel' not found")
           }
-        case _ => c.abort(path.pos, "Invalid path expression (only vertex label are currently supported)")
+        case _ => c.abort(path.tree.pos, "Invalid path expression (only vertex labels are currently supported)")
       }
     }
   }

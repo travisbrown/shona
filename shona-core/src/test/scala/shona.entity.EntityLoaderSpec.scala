@@ -16,22 +16,25 @@ import graph._
 import Property._
 
 class EntityLoaderSpec extends Specification {
+  val id = Sing("id"); import id._
+  val name = Sing("name"); import name._
+  val venue = Sing("venue"); import venue._
 
-  val venue = Vertex[label("venue")] ~ (
-    int   [label("id")], 
-    string[label("name")]
+  val venueV = Vertex[venue.T] ~ (
+    int   [id.T], 
+    string[name.T]
   )
 
-  val loader = EntityLoader.fromSeq(venue, 
+  val loader = EntityLoader.fromSeq(venueV, 
     List(
-      Entity((Field[label("id")] ~ 21, Field[label("name")] ~ "Pizzeria Mario")),
-      Entity((Field[label("id")] ~ 42, Field[label("name")] ~ "El Tacos"))
+      Entity((Field[id.T] ~ 21, Field[name.T] ~ "Pizzeria Mario")),
+      Entity((Field[id.T] ~ 42, Field[name.T] ~ "El Tacos"))
     )
   )
 
   "Shona EntityLoader.fromSeq" should {
     "load all entities with every fields" in {
-      val List(a, b) = loader.all(venue.properties).map(View(_))
+      val List(a, b) = loader.all(venueV.properties).map(View(_))
       a.id === 21
       a.name === "Pizzeria Mario"
       b.id === 42
@@ -40,7 +43,7 @@ class EntityLoaderSpec extends Specification {
 
     "load all entities for given fields only" in {
       // TODO Once dynamic field selector implemented: prove that name is not part of the entities
-      val List(a, b) = loader.all(int[label("id")] :: HNil).map(View(_))
+      val List(a, b) = loader.all(int[id.T] :: HNil).map(View(_))
       a.id === 21
       b.id === 42
     }

@@ -4,38 +4,77 @@
 //
 // Licensed under the Apache License, Version 2.0
 
-import language.experimental.macros
-import scala.reflect.macros.{Context, Macro}
-
-// Credits to @milesabin for the SingeltonType implementation -> https://github.com/milessabin/shapeless/tree/topic/macro-paradise
+import scala.language.experimental.macros
+import scala.reflect.macros.Context
 
 package shona {
   case class Label[T](value: T)
 
-  trait SingletonTypeMacros extends Macro {
-    import c.universe._
+  trait Sing {
+    type T <: Singleton
+  }
 
-    def eval[T](t: c.Tree) = c.eval(c.Expr[T](c.resetAllAttrs(t.duplicate)))
+  object Sing extends ReflectionUtils {
+    def apply[A](a: A): Any = macro apply_impl[A]
 
-    def singletonType[T](t: c.Expr[T]) =
-      TypeTree(ConstantType(Constant(
-        eval[T](t.tree)
-      )))
+    def apply_impl[A](c: Context)(a: c.Expr[A]) = {
+      import c.universe._
 
-    def witnessLabel[T: c.WeakTypeTag] = {
-      weakTypeOf[T] match {
-        case t @ ConstantType(Constant(s)) =>
-          val T = TypeTree(t)
-          val l = Literal(Constant(s))
-          c.Expr[T](q"new Label[$T]($l)")
-        case _ => c.abort(c.enclosingPosition, "Type argument must be a singleton type")
+      a.tree match {
+        case Literal(constant: Constant) =>
+          val anon = newTypeName(c.fresh)
+          val wrapper = newTypeName(c.fresh)
+          val label = newTermName(ConstantType(constant).toString)
+
+          c.Expr(
+            Block(
+              ClassDef(
+                Modifiers(),
+                anon,
+                Nil,
+                Template(
+                  TypeTree(typeOf[Sing]) :: Nil,
+                  emptyValDef,
+                  List(
+                    constructor(c.universe)(Nil),
+                    TypeDef(
+                      Modifiers(),
+                      newTypeName("T"),
+                      Nil,
+                      TypeTree(ConstantType(constant))
+                    ),
+                    ValDef(
+                      Modifiers(Flag.IMPLICIT),
+                      label,
+                      TypeTree(),
+                      Apply(
+                        TypeApply(
+                          Select(reify(Label).tree, newTermName("apply")),
+                          TypeTree(ConstantType(constant)) :: Nil
+                        ),
+                        Literal(constant) :: Nil
+                      )
+                    )
+                  )
+                )
+              ),
+              ClassDef(
+                Modifiers(Flag.FINAL),
+                wrapper,
+                Nil,
+                Template(
+                  Ident(anon) :: Nil,
+                  emptyValDef,
+                  constructor(c.universe)(Nil) :: Nil
+                )
+              ),
+              Apply(Select(New(Ident(wrapper)), nme.CONSTRUCTOR), Nil)
+            )
+          )
+
+        case _ => c.abort(c.enclosingPosition, "Not a literal!")
       }
     }
   }
 }
 
-package object shona {
-  type label[T](t: T) = macro SingletonTypeMacros.singletonType[T]
-  implicit def witnessLabel[T]: Label[T] = macro SingletonTypeMacros.witnessLabel[T]
-  def singleton[T](implicit label: Label[T]): T = label.value
-}

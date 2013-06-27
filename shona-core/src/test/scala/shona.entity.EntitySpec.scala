@@ -12,8 +12,10 @@ import org.specs2.mutable._
 import record._
 
 class EntitySpec extends Specification {
+  val id = Sing("id"); import id._
+  val email = Sing("email"); import email._
 
-  val entity = Entity((Field[label("id")] ~ 1000L, Field[label("email")] ~ "alois.cochard@gmail.com"))
+  val entity = Entity((Field[id.T] ~ 1000L, Field[email.T] ~ "alois.cochard@gmail.com"))
 
   "Shona Entity" should {
     "support view to access an entity fields" in {

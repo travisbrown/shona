@@ -42,19 +42,28 @@ class Parser extends RegexParsers {
 
 object Parser { def apply(input: String): Either[String, Tree] = (new Parser).apply(input) }
 
-object Query {
-  import language.experimental.macros
-  import scala.reflect.macros.{Context, Macro}
+import language.experimental.macros
+import scala.reflect.macros.Context
 
+object Query {
   def apply(query: String) = macro QueryMacro.apply
   def parse(query: String): Either[String, ast.Tree] = Parser(query)
 }
 
-trait QueryMacro extends MacroHelper {
-  import c._
-  import c.universe._
+object QueryMacro extends ReflectionUtils {
+  def apply(c: Context)(query: c.Expr[String]): c.Expr[ast.Tree] = {
+    import c.universe._
 
-  def apply(query: c.Expr[String]): c.Expr[ast.Tree] = {
+    object Query {
+      def fromTree(tree: Tree) = tree match {
+        case Literal(Constant(input: String)) => Parser(input) match {
+          case Right(query) => query
+          case Left(message) => c.abort(tree.pos, message)
+        }
+        case query => c.abort(query.pos, "The query expression is not a string literal")
+      }
+    }
+
     Query.fromTree(query.tree)
     reify(Parser(query.splice).right.get)
   }
