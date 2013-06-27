@@ -24,7 +24,7 @@ val venue = Vertex[label("venue")] ~ (
 )
 ```
 
-It should at least be possible to get rid of the extra imports.
+But it works more or less the same. It should at least be possible to get rid of the extra imports.
 
 ## Contribution Policy
 
