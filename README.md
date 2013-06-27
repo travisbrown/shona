@@ -1,5 +1,30 @@
 # Shona
-TBD
+
+This branch of the Shona project is a demonstration by [Travis Brown](https://twitter.com/travisbrown)
+of how Scala 2.10's `def` macros can be used to create references to
+singleton types. It's a little more verbose without type macros:
+
+``` scala
+val id = Sing("id"); import id._
+val name = Sing("name"); import name._
+val venue = Sing("venue"); import venue._
+
+val venueV = Vertex[venue.T] ~ (
+  int   [id.T],
+  string[name.T]
+)
+```
+
+Instead of the much more concise version in `master`:
+
+``` scala
+val venue = Vertex[label("venue")] ~ (
+  int   [label("id")], 
+  string[label("name")]
+)
+```
+
+It should at least be possible to get rid of the extra imports.
 
 ## Contribution Policy
 
