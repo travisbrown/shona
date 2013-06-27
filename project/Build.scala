@@ -23,6 +23,9 @@ object BuildSettings {
       "-language:reflectiveCalls",
       "-deprecation",
       "-unchecked"
+    ),
+    libraryDependencies <+= scalaVersion(
+      "org.scala-lang" % "scala-compiler" % _
     )
   )
 }
@@ -48,7 +51,7 @@ object ShonaBuild extends Build {
     "shona-core",
     file("shona-core"),
     settings = buildSettings ++ testDependencies ++ Seq(
-      libraryDependencies <++= (scalaVersion)(v => Seq("org.scala-lang" % "scala-reflect" % v, "org.scala-lang" % "scala-compiler" % v)),
+      //libraryDependencies <++= (scalaVersion)(v => Seq("org.scala-lang" % "scala-reflect" % v, "org.scala-lang" % "scala-compiler" % v)),
       libraryDependencies ++= Seq(
         "com.chuusai" %% "shapeless" % "1.2.4"
       )

@@ -16,9 +16,9 @@ import graph._
 import Property._
 
 class EntityFinderSpec extends Specification {
-  val id = Sing("id"); import id._
-  val name = Sing("name"); import name._
-  val venue = Sing("venue"); import venue._
+  val id = Sing("id")
+  val name = Sing("name")
+  val venue = Sing("venue")
 
   val venueV = Vertex[venue.T] ~ (
     int   [id.T], 

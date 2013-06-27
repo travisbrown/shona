@@ -12,8 +12,8 @@ import org.specs2.mutable._
 import record._
 
 class EntitySpec extends Specification {
-  val id = Sing("id"); import id._
-  val email = Sing("email"); import email._
+  val id = Sing("id")
+  val email = Sing("email")
 
   val entity = Entity((Field[id.T] ~ 1000L, Field[email.T] ~ "alois.cochard@gmail.com"))
 

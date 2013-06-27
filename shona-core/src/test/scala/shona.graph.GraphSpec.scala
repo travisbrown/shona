@@ -13,16 +13,16 @@ import record._
 import Property._
 
 class GraphSpec extends Specification {
-  val id = Sing("id"); import id._
-  val name = Sing("name"); import name._
-  val venue = Sing("venue"); import venue._
-  val address = Sing("address"); import address._
-  val review = Sing("review"); import review._
-  val venueId = Sing("venueId"); import venueId._
-  val street = Sing("street"); import street._
-  val city = Sing("city"); import city._
-  val rating = Sing("rating"); import rating._
-  val comment = Sing("comment"); import comment._
+  val id = Sing("id")
+  val name = Sing("name")
+  val venue = Sing("venue")
+  val address = Sing("address")
+  val review = Sing("review")
+  val venueId = Sing("venueId")
+  val street = Sing("street")
+  val city = Sing("city")
+  val rating = Sing("rating")
+  val comment = Sing("comment")
 
   val venueV = Vertex[venue.T] ~ (
     int   [id.T], 

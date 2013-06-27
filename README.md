@@ -2,12 +2,13 @@
 
 This branch of the Shona project is a demonstration by [Travis Brown](https://twitter.com/travisbrown)
 of how Scala 2.10's `def` macros can be used to create references to
-singleton types. It's a little more verbose without type macros:
+singleton types. It's a little more verbose without type macros, since we need a stable identifier
+in order to be able to refer to the type member:
 
 ``` scala
-val id = Sing("id"); import id._
-val name = Sing("name"); import name._
-val venue = Sing("venue"); import venue._
+val id = Sing("id")
+val name = Sing("name")
+val venue = Sing("venue")
 
 val venueV = Vertex[venue.T] ~ (
   int   [id.T],
@@ -24,7 +25,7 @@ val venue = Vertex[label("venue")] ~ (
 )
 ```
 
-But it works more or less the same. It should at least be possible to get rid of the extra imports.
+But it works more or less the same—e.g., `id.T` is exactly the same type as `label("id")`.
 
 ## Contribution Policy
 
